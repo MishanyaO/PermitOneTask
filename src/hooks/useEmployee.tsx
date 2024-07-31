@@ -1,17 +1,18 @@
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { EmployeeLineItem } from "../interfaces/employees";
 import { sleep } from "../utils/sleep";
 
 export const useEmployee = () => {
-  const [employees, setEmployees] = React.useState<EmployeeLineItem[]>([]);
-  const [isLoading, setIsLoading] = React.useState<boolean>(true);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const listEmployees = async (): Promise<void> => {
+  const [employees, setEmployees] = useState<EmployeeLineItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // naming changed to clarify what function does
+  const fetchEmployees = async (): Promise<void> => {
     try {
-      setIsLoading(true);
       await sleep(2000);
-      setEmployees([] as EmployeeLineItem[]);
+      // here we should set employees, but here its always empty. So, we should not use setEmployees again, because it's empty array already
+      // and we can delete this line, but I comment it
+      // setEmployees([]);
     } catch (e: any) {
       setError("Could not list employees");
     } finally {
@@ -19,38 +20,41 @@ export const useEmployee = () => {
     }
   };
 
-  const createEmployee = async (employee: EmployeeLineItem): Promise<void> => {
+  // create and update functions have a lot of duplication code and we can make 1 common function
+  const modifyEmployee = async (
+    employee: EmployeeLineItem,
+    action: "create" | "edit"
+  ): Promise<void> => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       await sleep(2000);
-      setEmployees([...employees, { ...employee }]);
-    } catch (e: any) {
-      setError("Could not create employee");
+      if (action === "create") {
+        setEmployees([...employees, { ...employee }]);
+      } else if (action === "edit") {
+        // use functional update to ensure the latest state of employees
+        setEmployees((prev) => [
+          employee,
+          ...prev.filter((el) => el.id !== employee.id),
+        ]);
+      }
+    } catch {
+      setError(
+        action === "create"
+          ? "Could not create employee"
+          : "Could not update employee"
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateEmployee = async (employee: EmployeeLineItem): Promise<void> => {
-    try {
-      setIsLoading(true);
-      await sleep(2000);
-      setEmployees([...employees]);
-    } catch (e: any) {
-      setError("Could not update employee");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  React.useEffect(() => {
-    listEmployees();
+  useEffect(() => {
+    fetchEmployees();
   }, []);
 
   return {
     employees,
-    createEmployee,
-    updateEmployee,
+    modifyEmployee,
     isLoading,
     error,
   };

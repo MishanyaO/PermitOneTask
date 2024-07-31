@@ -8,19 +8,23 @@ interface EmployeeFormProps {
   employee: EmployeeLineItem;
   handleSubmit: (employee: EmployeeLineItem) => Promise<void>;
 }
+// utility type to reuse EmployeeLineItem and exclude fields, which are not filled by user
+type FormValues = Omit<EmployeeLineItem, "created" | "id">;
+
+// move it outside component as constant
+const validationSchema = yup.object({
+  name: yup.string().required(),
+  email: yup.string().required(),
+  phone: yup.date().required(),
+  occupation: yup.string().required(),
+});
 
 export const EmployeeForm = ({
   loading,
   employee,
   handleSubmit,
 }: EmployeeFormProps) => {
-  const validationSchema = yup.object({
-    name: yup.string().required(),
-    email: yup.string().required(),
-    phone: yup.date().required(),
-    occupation: yup.string().required(),
-  });
-  const formik = useFormik({
+  const formik = useFormik<FormValues>({
     initialValues: {
       name: employee.name,
       email: employee.email,
@@ -28,88 +32,46 @@ export const EmployeeForm = ({
       occupation: employee.occupation,
     },
     enableReinitialize: true,
-    validationSchema: validationSchema,
+    validationSchema,
     onSubmit: async (values) => {
-      await handleSubmit({
-        ...employee,
-        name: values.name,
-        email: values.email,
-        phone: values.phone,
-      });
+      // spread values
+      await handleSubmit({ ...employee, ...values });
     },
   });
+  // to avoid duplication create separate component
+  const renderTextField = (field: keyof FormValues, label: string) => (
+    <Grid item xs={6} sm={6}>
+      <TextField
+        id={field}
+        name={field}
+        label={label}
+        fullWidth
+        disabled={loading}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        value={formik.values[field]}
+        error={formik.touched[field] && Boolean(formik.errors[field])}
+        helperText={formik.touched[field] && formik.errors[field]}
+      />
+    </Grid>
+  );
 
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={3}>
-        <Grid item xs={6} sm={6}>
-          <TextField
-            id="name"
-            name="name"
-            label="Name"
-            fullWidth
-            disabled={loading}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.name}
-            error={formik.touched.name && Boolean(formik.errors.name)}
-            helperText={formik.touched.name ? formik.errors.name : ""}
-          />
-        </Grid>
-        <Grid item xs={6} sm={6}>
-          <TextField
-            id="emailAddress"
-            name="emailAddress"
-            label="email"
-            fullWidth
-            disabled={loading}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.email}
-            error={formik.touched.email && Boolean(formik.errors.email)}
-            helperText={formik.touched.email ? formik.errors.email : ""}
-          />
-        </Grid>
-        <Grid item xs={6} sm={6}>
-          <TextField
-            id="phone"
-            name="phone"
-            label="phone"
-            fullWidth
-            disabled={loading}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.phone}
-            error={formik.touched.phone && Boolean(formik.errors.phone)}
-            helperText={formik.touched.phone ? formik.errors.phone : ""}
-          />
-        </Grid>
-        <Grid item xs={6} sm={6}>
-          <TextField
-            id="occupation"
-            name="occupation"
-            label="occupation"
-            fullWidth
-            disabled={loading}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            value={formik.values.occupation}
-            error={
-              formik.touched.occupation && Boolean(formik.errors.occupation)
-            }
-            helperText={
-              formik.touched.occupation ? formik.errors.occupation : ""
-            }
-          />
-        </Grid>
+        {renderTextField("name", "Name")}
+        {renderTextField("email", "Email")}
+        {renderTextField("phone", "Phone")}
+        {renderTextField("occupation", "Occupation")}
         <Grid item xs={6} sm={6} />
         <Grid
           item
           xs={12}
           sm={12}
+          // important! is a bad practice and better to avoid
           sx={{
-            display: "flex !important",
-            justifyContent: "right !important;",
+            display: "flex",
+            justifyContent: "right",
           }}
         >
           <Button type="submit" disabled={formik.isSubmitting || loading}>

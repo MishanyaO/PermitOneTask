@@ -1,17 +1,18 @@
-import * as React from "react";
+import { useState } from "react";
 import { EmployeeLineItem } from "../interfaces/employees";
 import { sleep } from "../utils/sleep";
 import { writeEmployeesToExcel } from "../utils/excel";
 
 export const useExcelExport = () => {
-  const [isExporting, setIsExporting] = React.useState<boolean>(false);
-  const [error, setError] = React.useState<string | null>(null);
+  // deleted type annotation because of Typescript's type inference
+  const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const exportExployees = async (
     employees: EmployeeLineItem[]
   ): Promise<void> => {
+    setIsExporting(true);
     try {
-      setIsExporting(true);
       await writeEmployeesToExcel(employees);
       await sleep(2000);
       return;
@@ -21,6 +22,7 @@ export const useExcelExport = () => {
       setIsExporting(false);
     }
   };
+
   return {
     exportExployees,
     isExporting,

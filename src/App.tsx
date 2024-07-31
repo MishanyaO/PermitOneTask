@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { EmployeeTable } from "./components/EmpoyeeTable/EmployeeTable";
 import { EmployeeLineItem } from "./interfaces/employees";
@@ -7,11 +7,48 @@ import EmployeeModal from "./components/EmployeeModal/EmployeeModal";
 import { writeEmployeesToExcel } from "./utils/excel";
 
 function App() {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] =
-    React.useState<EmployeeLineItem>();
-  const { employees, createEmployee, updateEmployee, isLoading } =
-    useEmployee();
+    //initial type and value
+    useState<EmployeeLineItem | undefined>(undefined);
+  const { employees, modifyEmployee, isLoading } = useEmployee();
+
+  // separate functions to encapsulate logic from rendering
+  const handleExport = async () => {
+    if (employees.length) {
+      // one extra-call deleted
+      await writeEmployeesToExcel(employees);
+    } else {
+      alert("No employees to export");
+    }
+  };
+
+  const handleAdd = () => {
+    setSelectedEmployee(undefined);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (employee: EmployeeLineItem): void => {
+    setIsModalOpen(true);
+    setSelectedEmployee(employee);
+  };
+
+  const handleClose = (): void => {
+    setIsModalOpen(false);
+    setSelectedEmployee(undefined);
+  };
+
+  // function removed from modal to simplify and remove unnecessary props
+  const handleModalSubmit = async (
+    employee: EmployeeLineItem
+  ): Promise<void> => {
+    if (selectedEmployee) {
+      await modifyEmployee(employee, "edit");
+    } else {
+      await modifyEmployee(employee, "create");
+    }
+    handleClose();
+  };
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -27,24 +64,11 @@ function App() {
           <Button
             color="primary"
             sx={{ marginRight: 1 }}
-            onClick={async () => {
-              if (employees.length) {
-                await writeEmployeesToExcel(employees);
-                await writeEmployeesToExcel(employees);
-              } else {
-                alert("No employees to export");
-              }
-            }}
+            onClick={handleExport}
           >
             Export
           </Button>
-          <Button
-            color="primary"
-            onClick={() => {
-              setSelectedEmployee(undefined);
-              setIsModalOpen(true);
-            }}
-          >
+          <Button color="primary" onClick={handleAdd}>
             Add
           </Button>
         </Box>
@@ -52,23 +76,16 @@ function App() {
       <EmployeeTable
         loading={isLoading}
         employees={employees}
-        handleEditEmployee={(employee: EmployeeLineItem): void => {
-          setIsModalOpen(true);
-          setSelectedEmployee(employee);
-        }}
+        handleEditEmployee={handleEdit}
       />
-      {isModalOpen ? (
+      {isModalOpen && (
         <EmployeeModal
           loading={isLoading}
+          handleClose={handleClose}
           existingEmployee={selectedEmployee}
-          createEmployee={createEmployee}
-          updateEmployee={updateEmployee}
-          handleClose={(): void => {
-            setIsModalOpen(false);
-            setSelectedEmployee(undefined);
-          }}
+          handleSubmit={handleModalSubmit}
         />
-      ) : undefined}
+      )}
     </Box>
   );
 }

@@ -18,6 +18,42 @@ interface EmployeeTableProps {
   handleEditEmployee: (employee: EmployeeLineItem) => void;
 }
 
+// separate functions to improve readability and avoid duplications + key for mapping
+const renderTableHeader = () => (
+  <TableRow>
+    {["Name", "Email", "Phone", "Occupation", "Actions"].map((header) => (
+      <TableCell key={header}>
+        <Typography>{header}</Typography>
+      </TableCell>
+    ))}
+  </TableRow>
+);
+
+const renderTableBody = (
+  loading: boolean,
+  employees: EmployeeLineItem[],
+  handleEditEmployee: (employee: EmployeeLineItem) => void
+) => {
+  if (loading) {
+    return Array.from({ length: 10 }, (_, index) => (
+      // usage of index for key is a bad practice, in this case there is no option
+      <EmployeeTableRowSkeleton key={index} />
+    ));
+  }
+
+  if (!employees.length) {
+    return <NoRows title={"Employees"} />;
+  }
+
+  return employees.map((employee) => (
+    <EmployeeTableRow
+      key={employee.id}
+      employee={employee}
+      handleEditEmployee={handleEditEmployee}
+    />
+  ));
+};
+
 export const EmployeeTable = ({
   loading,
   employees,
@@ -26,42 +62,9 @@ export const EmployeeTable = ({
   return (
     <Grid item xs={12} md={12}>
       <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <Typography>Name</Typography>
-            </TableCell>
-            <TableCell>
-              <Typography>Email</Typography>
-            </TableCell>
-            <TableCell>
-              <Typography>Phone</Typography>
-            </TableCell>
-            <TableCell>
-              <Typography>Occupation</Typography>
-            </TableCell>
-            <TableCell>
-              <Typography>Actions</Typography>
-            </TableCell>
-          </TableRow>
-        </TableHead>
+        <TableHead>{renderTableHeader()}</TableHead>
         <TableBody>
-          {loading
-            ? Array.from({ length: 10 }, (_, index) => (
-                <EmployeeTableRowSkeleton />
-              ))
-            : employees?.map((row) => {
-                return (
-                  <EmployeeTableRow
-                    employee={row}
-                    handleEditEmployee={handleEditEmployee}
-                  />
-                );
-              })}
-
-          {!loading && !employees.length ? (
-            <NoRows title={"Employees"} />
-          ) : null}
+          {renderTableBody(loading, employees, handleEditEmployee)}
         </TableBody>
       </Table>
     </Grid>
