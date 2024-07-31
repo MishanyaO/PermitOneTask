@@ -74,7 +74,11 @@ export const EmployeeForm = ({
             justifyContent: "right",
           }}
         >
-          <Button type="submit" disabled={formik.isSubmitting || loading}>
+          <Button
+            type="submit"
+            disabled={formik.isSubmitting || loading}
+            variant="contained"
+          >
             Save
           </Button>
         </Grid>

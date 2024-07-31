@@ -23,7 +23,9 @@ const renderTableHeader = () => (
   <TableRow>
     {["Name", "Email", "Phone", "Occupation", "Actions"].map((header) => (
       <TableCell key={header}>
-        <Typography>{header}</Typography>
+        <Typography variant="overline" sx={{ fontWeight: 900 }}>
+          {header}
+        </Typography>
       </TableCell>
     ))}
   </TableRow>

@@ -65,10 +65,11 @@ function App() {
             color="primary"
             sx={{ marginRight: 1 }}
             onClick={handleExport}
+            variant="outlined"
           >
             Export
           </Button>
-          <Button color="primary" onClick={handleAdd}>
+          <Button color="primary" onClick={handleAdd} variant="contained">
             Add
           </Button>
         </Box>
